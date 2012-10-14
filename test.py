@@ -42,4 +42,3 @@ for i,(h,d) in enumerate(pktlist):
         print
     else:
         print "type = %d"%frame.type
-print 'just a test'
