@@ -5,7 +5,7 @@ pktlist = []
 cap = Capturer.Capturer(pktlist)
 cap.print_device_list()
 print cap.open_dev()
-print cap.compile_filter("")
+print cap.compile_filter("!arp")
 print cap.set_filter()
 goon = True
 t = threading.Thread(target=cap.start_capture)
@@ -17,6 +17,13 @@ t.join()
 for i,(h,d) in enumerate(pktlist):
     frame = dpkt.ethernet.Ethernet(d)
     print "num %d"%(i+1)
+    print "*********************"
+    data = frame
+    while data.__class__.__name__ != "str":
+        print data.__class__.__name__
+        data = data.data
+    print "*********************"
+            
 
     print 'src mac:%.2x:%.2x:%.2x:%.2x:%.2x:%.2x'% tuple(map(ord,list(frame.src)))
     print 'dst mac:%.2x:%.2x:%.2x:%.2x:%.2x:%.2x'% tuple(map(ord,list(frame.dst)))
@@ -42,3 +49,5 @@ for i,(h,d) in enumerate(pktlist):
         print
     else:
         print "type = %d"%frame.type
+
+

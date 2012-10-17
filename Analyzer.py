@@ -9,6 +9,9 @@ class Analyer():
         header, data = pkt
         
         pktItem = PktItem()
+        pktItem.link = header
+        pktItem.data = data
+        
         frame = dpkt.ethernet.Ethernet(data)
         
         self.handle_frame(pktItem, header, frame)
@@ -16,11 +19,11 @@ class Analyer():
         if frame.type == dpkt.ethernet.ETH_TYPE_ARP:
             self.handle_arp(pktItem, frame.data)
         elif frame.type == dpkt.ethernet.ETH_TYPE_IP:
-            self.handle_ip(pktItem, data)
+            self.handle_ip(pktItem, frame.data)
         elif frame.type == dpkt.ethernet.ETH_TYPE_IP6:
-            self.handle_ipv6(pktItem, data)
+            self.handle_ipv6(pktItem, frame.data)
         else:
-            self.handle_unknown(pktItem)
+            self.handle_unknown(pktItem,frame.data)
         return pktItem
         
     def handle_frame(self, pktItem, header, frame):
@@ -59,13 +62,13 @@ class Analyer():
         if data.p == dpkt.ip.IP_PROTO_TCP:
             self.handle_tcp(pktItem, data.data)
         elif data.p == dpkt.ip.IP_PROTO_UDP:
-            self.handle_udp(pktItem, data)
+            self.handle_udp(pktItem, data.data)
         elif data.p == dpkt.ip.IP_PROTO_ICMP:
-            self.handle_icmp(pktItem, data)
+            self.handle_icmp(pktItem, data.data)
         elif data.p == dpkt.ip.IP_PROTO_IGMP:
-            self.handle_igmp(pktItem, data)
+            self.handle_igmp(pktItem, data.data)
         else:
-            self.handle_unknown(pktItem)
+            self.handle_unknown(pktItem, data.data)
     
     def handle_ipv6(self, pktItem, data):
         pktItem.src_ip = self.ntoa_ipv6(data.src)
@@ -74,31 +77,33 @@ class Analyer():
         if data.p == dpkt.ip.IP_PROTO_TCP:
             self.handle_tcp(pktItem, data.data)
         elif data.p == dpkt.ip.IP_PROTO_UDP:
-            self.handle_udp(pktItem, data)
-        elif data.p == dpkt.ip.IP_PROTO_ICMP:
-            self.handle_icmp(pktItem, data)
-        elif data.p == dpkt.ip.IP_PROTO_IGMP:
-            self.handle_igmp(pktItem, data)
+            self.handle_udp(pktItem, data.data)
+        elif data.p == dpkt.ip.IP_PROTO_ICMP6:
+            self.handle_icmp(pktItem, data.data)
         else:
-            self.handle_unknown(pktItem)
+            self.handle_unknown(pktItem, data.data)
     
     def handle_tcp(self, pktItem, data):
-        pass
+        pktItem.src_port = data.sport
+        pktItem.dst_port = data.dport
+        pktItem.protocol = "TCP"
     
     def handle_udp(self, pktItem, data):
-        pass
+        pktItem.src_port = data.sport
+        pktItem.dst_port = data.dport
+        pktItem.protocol = "UDP"
     
     def handle_icmp(self, pktItem, data):
-        pass
+        pktItem.protocol = "ICMP"
     
     def handle_igmp(self, pktItem, data):
-        pass
+        pktItem.protocol = "IGMP"
     
     def handle_icmpv6(self,pktItem, data):
-        pass
+        pktItem.protocol = "ICMPv6"
     
-    def handle_unknown(self, pktItem):
-        pktItem.protocol = 'unknown'
+    def handle_unknown(self, pktItem, data):
+        pktItem.protocol = data.__class__.__name__
         self.statistics.unknown += 1
     
     def handle_error(self, pktItem):
@@ -134,6 +139,8 @@ class Statistics:
 
 class PktItem():
     def __init__(self):
+        self.link = None
+        self.data = None
         self.time = None
         self.len = None
         self.protocol = None

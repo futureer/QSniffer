@@ -12,15 +12,16 @@ header = POINTER(pcap_pkthdr)()
 pkt_data = POINTER(c_ubyte)()
 
 class Capturer():
-    def __init__(self, pktlist):
+    def __init__(self, pktlist, mutex):
         self.pktlist = pktlist      # packet list
+        self.mutex = mutex          # mutex clock protect the pktlist
         self.devlist = []           # device list
         self.__ispromisc = False      # promisc flag
         self.ifindex = 0            # choosed interface
         self.adhandle = None        # interface handler
         self.filter = ""            # filter string
         self.fcode= bpf_program()   # filter code
-        self.goon = True
+        self.goon = False
         self.get_device_list()
     
     def get_device_list(self):
@@ -95,25 +96,30 @@ class Capturer():
         return True
     
     def start_capture(self):
-        count = 0
         res = 1
-        while res >= 0 and count<20000 and self.goon:
+        self.goon = True
+        while res >= 0 and self.goon:
             res = pcap_next_ex(self.adhandle, byref(header), byref(pkt_data))
             if res == 0:
                 print "timeout"
                 continue
+            
+            self.mutex.acquire()
             self.pktlist.append((copy.deepcopy(header.contents), 
                                  buffer(bytearray(pkt_data[:header.contents.len]))))
-            count = count + 1
+            self.mutex.release()
+            
         if res == -1:
             print("Error reading the packets: %s\n", pcap_geterr(self.adhandle));
             pcap_close(self.adhandle)
             return False
         pcap_close(self.adhandle)
+        self.adhandle = None
         return True
     
     def stop_capture(self):
-        pass
+        self.goon = False
+        print 'set it to False'
     
     def print_pkts(self):
         for h, d in self.pktlist:

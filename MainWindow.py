@@ -6,7 +6,7 @@ Module implementing MainWindow.
 
 from PyQt4.QtGui import QMainWindow
 from PyQt4.QtCore import pyqtSignature
-
+from PyQt4.QtGui import QTableWidget
 from Ui_QSniffer import Ui_MainWindow
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -21,6 +21,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         
         self.pktTableWidget.setColumnWidth(0,50)
+        self.pktTableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.pktTableWidget.setSelectionBehavior(QTableWidget.SelectRows)
+        self.pktTableWidget.setSelectionMode(QTableWidget.SingleSelection)
+        self.pktTableWidget.setAlternatingRowColors(True)
     
     @pyqtSignature("")
     def on_filterApplyButton_clicked(self):
