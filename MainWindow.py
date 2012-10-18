@@ -5,7 +5,7 @@ Module implementing MainWindow.
 """
 
 from PyQt4.QtGui import QMainWindow
-from PyQt4.QtCore import pyqtSignature
+from PyQt4.QtCore import pyqtSignature, QStringList, QString
 from PyQt4.QtGui import QTableWidget
 from Ui_QSniffer import Ui_MainWindow
 
@@ -25,6 +25,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pktTableWidget.setSelectionBehavior(QTableWidget.SelectRows)
         self.pktTableWidget.setSelectionMode(QTableWidget.SingleSelection)
         self.pktTableWidget.setAlternatingRowColors(True)
+    
+    def set_devlist(self, devlist, isWIN32):
+        qslist = QStringList()
+        if isWIN32:
+            for dev in devlist:
+                qslist.append(QString(dev.description))
+        else:
+            for dev in self.capturer.devlist:
+                qslist.append(QString(dev.name))
+        self.devComboBox.addItems(qslist)
     
     @pyqtSignature("")
     def on_filterApplyButton_clicked(self):
@@ -82,4 +92,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         pass
     
+    @pyqtSignature("QModelIndex")
+    def on_pktTableWidget_activated(self, index):
+        """
+        Slot documentation goes here.
+        """
+        pass
+    
+    @pyqtSignature("int, int")
+    def on_pktTableWidget_cellClicked(self, row, column):
+        """
+        Slot documentation goes here.
+        """
+        pass
     

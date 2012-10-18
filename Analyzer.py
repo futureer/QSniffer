@@ -1,16 +1,43 @@
 from winpcapy import pcap_pkthdr
 import time, inspect, dpkt
+from PyQt4 import QtGui, QtCore
+from Util import Statistics, PktItem
 
 class Analyer():
-    def __init__(self):
+    def __init__(self, pktList, table, window):
         self.statistics = Statistics()
+        self.pktList = pktList
+        self.table = table
+        self.window = window
+        self.itemlist = []
+        self.goon = False
         
+    def start_analize(self):
+        self.goon = True
+        while self.goon:
+            if len(self.pktList.pktlist) > 0:
+                self.pktList.mutex.acquire()
+                p = self.pktList.pktlist.pop(0)
+                self.pktList.mutex.release()
+                
+                item = self.analize(p)
+                self.itemlist.append(item)
+                self.show_item(item)
+            else:
+                time.sleep(0.01)
+            self.statistics.updateStatistics(self.window)
+    def stop_analize(self):
+        self.goon = False
+    def clear(self):
+        self.statistics = Statistics()
+        self.statistics.updateStatistics(self.window)
+        del self.itemlist[:]
+    
     def analize(self, pkt):
         header, data = pkt
         
         pktItem = PktItem()
-        pktItem.link = header
-        pktItem.data = data
+        pktItem.rawpkt = pkt
         
         frame = dpkt.ethernet.Ethernet(data)
         
@@ -23,10 +50,13 @@ class Analyer():
         elif frame.type == dpkt.ethernet.ETH_TYPE_IP6:
             self.handle_ipv6(pktItem, frame.data)
         else:
-            self.handle_unknown(pktItem,frame.data)
+            self.handle_unknown(pktItem, frame.data)
         return pktItem
         
     def handle_frame(self, pktItem, header, frame):
+        """
+        assume that no error occur in the header section
+        """
         local_tv_sec = header.ts.tv_sec
         ltime = time.localtime(local_tv_sec);
         pktItem.time = time.strftime("%H:%M:%S", ltime) # time
@@ -59,6 +89,7 @@ class Analyer():
         pktItem.src_ip = self.ntoa_ip(data.src)
         pktItem.dst_ip = self.ntoa_ip(data.dst)
         pktItem.protocol = 'IP'
+        self.statistics.ip += 1
         if data.p == dpkt.ip.IP_PROTO_TCP:
             self.handle_tcp(pktItem, data.data)
         elif data.p == dpkt.ip.IP_PROTO_UDP:
@@ -74,6 +105,7 @@ class Analyer():
         pktItem.src_ip = self.ntoa_ipv6(data.src)
         pktItem.dst_ip = self.ntoa_ipv6(data.dst)
         pktItem.protocol = 'IPv6'
+        self.statistics.ipv6 += 1
         if data.p == dpkt.ip.IP_PROTO_TCP:
             self.handle_tcp(pktItem, data.data)
         elif data.p == dpkt.ip.IP_PROTO_UDP:
@@ -87,20 +119,25 @@ class Analyer():
         pktItem.src_port = data.sport
         pktItem.dst_port = data.dport
         pktItem.protocol = "TCP"
+        self.statistics.tcp += 1
     
     def handle_udp(self, pktItem, data):
         pktItem.src_port = data.sport
         pktItem.dst_port = data.dport
         pktItem.protocol = "UDP"
+        self.statistics.udp += 1
     
     def handle_icmp(self, pktItem, data):
         pktItem.protocol = "ICMP"
+        self.statistics.icmp += 1
     
     def handle_igmp(self, pktItem, data):
         pktItem.protocol = "IGMP"
+        self.statistics.igmp += 1
     
-    def handle_icmpv6(self,pktItem, data):
+    def handle_icmpv6(self, pktItem, data):
         pktItem.protocol = "ICMPv6"
+        self.statistics.icmpv6 += 1
     
     def handle_unknown(self, pktItem, data):
         pktItem.protocol = data.__class__.__name__
@@ -119,37 +156,47 @@ class Analyer():
     def ntoa_ipv6(self, nipv6):
         # TODO: format the ipv6 address
         return '%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x' % tuple(map(ord, list(nipv6)))
-
-
-class Statistics:
-    def __init__(self):
-        self.ip = 0
-        self.ipv6 = 0
-        self.arp = 0
-        self.rarp = 0
-        self.tcp = 0
-        self.udp = 0
-        self.icmp = 0
-        self.icmpv6 = 0
-        self.igmp = 0
-        self.error = 0
-        self.unknown = 0
-        self.total = 0
-
-
-class PktItem():
-    def __init__(self):
-        self.link = None
-        self.data = None
-        self.time = None
-        self.len = None
-        self.protocol = None
-        self.src_mac = None
-        self.dst_mac = None
-        self.src_ip = None
-        self.dst_ip = None
-        self.src_port = None
-        self.dst_port = None
-        self.info = None
+    
+    def show_item(self, item):
+#        table = self.pktTableWidget
+        row = self.table.rowCount()
+        self.table.insertRow(row)
         
+        source = item.src_ip
+        if source == None:
+            source = item.src_mac
+        destination = item.dst_ip
+        if destination == None:
+            destination = item.dst_mac
+        
+        if item.protocol == 'TCP' or item.protocol == 'UDP':
+            source += ':' + str(item.src_port)
+            destination += ':' + str(item.dst_port)
+
+        
+        No = QtGui.QTableWidgetItem(QtCore.QString(str(row + 1)))
+        No.setFlags(No.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.table.setItem(row, 0, No)
+        
+        Time = QtGui.QTableWidgetItem(QtCore.QString(item.time))
+        Time.setFlags(Time.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.table.setItem(row, 1, Time)
+        
+        Source = QtGui.QTableWidgetItem(QtCore.QString(source))
+        Source.setFlags(Source.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.table.setItem(row, 2, Source)
+        
+        Destination = QtGui.QTableWidgetItem(QtCore.QString(destination))
+        Destination.setFlags(Destination.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.table.setItem(row, 3, Destination)
+        
+        Protocol = QtGui.QTableWidgetItem(QtCore.QString(item.protocol))
+        Protocol.setFlags(Protocol.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.table.setItem(row, 4, Protocol)
+        
+        Length = QtGui.QTableWidgetItem(QtCore.QString(str(item.len)))
+        Length.setFlags(Length.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.table.setItem(row, 5, Length)
+
+    
         

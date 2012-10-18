@@ -20,8 +20,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
     
-    @pyqtSignature("int")
-    def on_devComboBox_currentIndexChanged(self, index):
+    @pyqtSignature("QModelIndex")
+    def on_pktTableWidget_activated(self, index):
+        """
+        Slot documentation goes here.
+        """
+        # TODO: not implemented yet
+        raise NotImplementedError
+    
+    @pyqtSignature("int, int")
+    def on_pktTableWidget_cellClicked(self, row, column):
         """
         Slot documentation goes here.
         """

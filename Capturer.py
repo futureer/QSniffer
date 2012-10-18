@@ -1,8 +1,8 @@
 from ctypes import *
 from winpcapy import *
-import time
-import platform
-import copy
+import time, platform, copy
+from Util import PktList
+
 
 if platform.python_version()[0] == "3":
     raw_input = input
@@ -12,9 +12,8 @@ header = POINTER(pcap_pkthdr)()
 pkt_data = POINTER(c_ubyte)()
 
 class Capturer():
-    def __init__(self, pktlist, mutex):
-        self.pktlist = pktlist      # packet list
-        self.mutex = mutex          # mutex clock protect the pktlist
+    def __init__(self, pktList):
+        self.pktList = pktList      # packet list
         self.devlist = []           # device list
         self.__ispromisc = False      # promisc flag
         self.ifindex = 0            # choosed interface
@@ -104,10 +103,10 @@ class Capturer():
                 print "timeout"
                 continue
             
-            self.mutex.acquire()
-            self.pktlist.append((copy.deepcopy(header.contents), 
+            self.pktList.mutex.acquire()
+            self.pktList.pktlist.append((copy.deepcopy(header.contents), 
                                  buffer(bytearray(pkt_data[:header.contents.len]))))
-            self.mutex.release()
+            self.pktList.mutex.release()
             
         if res == -1:
             print("Error reading the packets: %s\n", pcap_geterr(self.adhandle));
@@ -119,10 +118,12 @@ class Capturer():
     
     def stop_capture(self):
         self.goon = False
-        print 'set it to False'
+    
+    def clear(self):
+        pass
     
     def print_pkts(self):
-        for h, d in self.pktlist:
+        for h, d in self.pktList.pktlist:
             local_tv_sec = h.ts.tv_sec
             ltime = time.localtime(local_tv_sec);
             timestr = time.strftime("%H:%M:%S", ltime)
@@ -132,8 +133,7 @@ class Capturer():
 
 if __name__ == '__main__':
     pktlist = []
-    cap = Capturer(pktlist)
-    print cap.open_dev()
-    print cap.compile_filter()
+    cap = Capturer(pktlist,None)
+    print cap.print_device_list()
 
         
