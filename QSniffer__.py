@@ -2,14 +2,13 @@ from MainWindow import MainWindow, pyqtSignature
 from Capturer import Capturer, WIN32
 from PyQt4 import QtCore, QtGui
 from Analyzer import Analyer
-from Util import PktList
-import sys, threading
+from Util import PktList, ProtocolTree, PktContent
+import sys, threading, shutil, os
 
 class QSniffer(MainWindow):
     def __init__(self):
         MainWindow.__init__(self)
-#        self.pktlist = []
-#        self.pktlist_mutex = threading.Lock()
+        
         self.pktList = PktList()
         
         self.capturer = Capturer(self.pktList)
@@ -18,18 +17,12 @@ class QSniffer(MainWindow):
         self.ana_thread = None
         
         MainWindow.set_devlist(self, self.capturer.devlist, WIN32)
-        
+#        self.testWidget()
         self.show()
     
-    def testTableWidget(self):
-        table = self.pktTableWidget
-#        table.setRowCount(20)
-        table.insertRow(0)
-
-        item = QtGui.QTableWidgetItem(QtCore.QString("hello dfafdsafdafdsafdsafdsafsa"))
-        item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
-        table.setItem(0, 0, item)
-    
+    def testWidget(self):
+        pass
+        
     @pyqtSignature("int")
     def on_promisCheckBox_stateChanged(self, p0):
         MainWindow.on_promisCheckBox_stateChanged(self, p0)
@@ -44,7 +37,8 @@ class QSniffer(MainWindow):
         MainWindow.on_startButton_clicked(self)
         if self.capturer.adhandle == None:
             curindex = self.devComboBox.currentIndex()
-            if not self.capturer.open_dev(curindex):
+            source = self.capturer.choose_source('dev', curindex)
+            if not self.capturer.open_source(source):
 #                TODO: handle open error
                 return
         self.cap_thread = threading.Thread(target=self.capturer.start_capture)
@@ -66,23 +60,67 @@ class QSniffer(MainWindow):
     def on_clearButton_clicked(self):
         MainWindow.on_clearButton_clicked(self)
         if self.cap_thread == None or self.ana_thread == None:
-            return
+            return False
         elif self.cap_thread.is_alive() or self.ana_thread.is_alive():
             QtGui.QMessageBox.information(self, "Information", self.tr("You must stop capture first."))
-            return 
+            return False
         self.capturer.clear()
         self.analyzer.clear()
         self.pktList.clear()
         count = self.pktTableWidget.rowCount()
         for i in range(count):
             self.pktTableWidget.removeRow(0)
+        return True
     
+    @pyqtSignature("")
+    def on_exportButton_clicked(self):
+        MainWindow.on_exportButton_clicked(self)
+        if self.cap_thread == None or self.ana_thread == None:
+            return
+        if self.cap_thread.is_alive() or self.ana_thread.is_alive():
+            QtGui.QMessageBox.information(self, "Information", self.tr("You must stop capture first."))
+            return 
+        
+        fdialog = QtGui.QFileDialog()
+        fdialog.setWindowTitle('Save pcap file')
+        fname = fdialog.getSaveFileName(filter='pcap file(*.pcap)', directory='.')
+        shutil.move('~tmp', fname)
+    
+    @pyqtSignature("")
+    def on_importButton_clicked(self):
+        MainWindow.on_importButton_clicked(self)
+        if self.cap_thread == None and self.ana_thread == None:
+            pass
+        elif self.cap_thread.is_alive() or self.ana_thread.is_alive():
+            QtGui.QMessageBox.information(self, "Information", self.tr("You must stop capture first."))
+            return
+        self.capturer.clear()
+        self.analyzer.clear()
+        self.pktList.clear()
+        count = self.pktTableWidget.rowCount()
+        for i in range(count):
+            self.pktTableWidget.removeRow(0)
+        
+        fdialog = QtGui.QFileDialog()
+        fdialog.setWindowTitle('Select pcap file')
+        fname = fdialog.getOpenFileName(directory='.')
+        source = self.capturer.choose_source('file', fname)
+        if not self.capturer.open_source(source):
+            return
+        self.cap_thread = threading.Thread(target=self.capturer.start_capture)
+        self.cap_thread.start()
+        self.ana_thread = threading.Thread(target=self.analyzer.start_analize)
+        self.ana_thread.start()
+        
+        
+        
     @pyqtSignature("")
     def on_filterApplyButton_clicked(self):
         MainWindow.on_filterApplyButton_clicked(self)
         if self.capturer.adhandle == None:
             curindex = self.devComboBox.currentIndex()
-            if not self.capturer.open_dev(curindex):
+            source = self.capturer.choose_source('dev', curindex)
+            if not self.capturer.open_source(source):
                 return
         filterstr = str(self.filterLineEdit.text())
 #        print "%r" % filterstr
@@ -110,13 +148,28 @@ class QSniffer(MainWindow):
     @pyqtSignature("int")
     def on_devComboBox_currentIndexChanged(self, index):
         MainWindow.on_devComboBox_currentIndexChanged(self, index)
+        self.analyzer.statistics.updateStatistics(self)
 #        print "combobox index:%d" % index
         
     @pyqtSignature("int, int")
     def on_pktTableWidget_cellClicked(self, row, column):
         MainWindow.on_pktTableWidget_cellClicked(self, row, column)
         tree = self.pktTreeWidget
+        tree.clear()
+        pktItem = self.analyzer.itemlist[row]
+        pktdata = pktItem.rawpkt[1]
         
+        pTree = ProtocolTree(tree, pktdata)
+        tree.insertTopLevelItems(0, pTree.parseProtocol())
+        p0xb = self.pkt0xBrowser
+        p0xb.setText(QtCore.QString(PktContent.pkt0xContent(pktdata)))
+        pasciib = self.pktAsciiBrowser
+        pasciib.setText(QtCore.QString(PktContent.pktAsciiContent(pktdata)))
+    
+    def closeEvent(self, *args, **kwargs):
+        if os.path.exists('./~tmp'):
+            os.remove('./~tmp')
+        return MainWindow.closeEvent(self, *args, **kwargs)
     
 
 if __name__ == "__main__":

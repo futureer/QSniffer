@@ -1,13 +1,13 @@
 from winpcapy import pcap_pkthdr
 import time, inspect, dpkt
 from PyQt4 import QtGui, QtCore
-from Util import Statistics, PktItem
+from Util import Statistics, PktItem, NetFormat
 
 class Analyer():
     def __init__(self, pktList, table, window):
         self.statistics = Statistics()
         self.pktList = pktList
-        self.table = table
+        self.table = table  #tablewidget
         self.window = window
         self.itemlist = []
         self.goon = False
@@ -35,7 +35,6 @@ class Analyer():
     
     def analize(self, pkt):
         header, data = pkt
-        
         pktItem = PktItem()
         pktItem.rawpkt = pkt
         
@@ -51,6 +50,7 @@ class Analyer():
             self.handle_ipv6(pktItem, frame.data)
         else:
             self.handle_unknown(pktItem, frame.data)
+            print '0x%.4x'%frame.type
         return pktItem
         
     def handle_frame(self, pktItem, header, frame):
@@ -64,8 +64,8 @@ class Analyer():
         pktItem.len = header.len    # length
         
         pktItem.protocol = 'Ethernet'   # protocol
-        pktItem.src_mac = self.ntoa_mac(frame.src)  # src_mac
-        pktItem.dst_mac = self.ntoa_mac(frame.dst)  # dst_mac
+        pktItem.src_mac = NetFormat.ntoa_mac(frame.src)  # src_mac
+        pktItem.dst_mac = NetFormat.ntoa_mac(frame.dst)  # dst_mac
         
         self.statistics.total += 1
     
@@ -86,8 +86,8 @@ class Analyer():
             self.handle_error(pktItem)
     
     def handle_ip(self, pktItem, data):
-        pktItem.src_ip = self.ntoa_ip(data.src)
-        pktItem.dst_ip = self.ntoa_ip(data.dst)
+        pktItem.src_ip = NetFormat.ntoa_ip(data.src)
+        pktItem.dst_ip = NetFormat.ntoa_ip(data.dst)
         pktItem.protocol = 'IP'
         self.statistics.ip += 1
         if data.p == dpkt.ip.IP_PROTO_TCP:
@@ -102,8 +102,8 @@ class Analyer():
             self.handle_unknown(pktItem, data.data)
     
     def handle_ipv6(self, pktItem, data):
-        pktItem.src_ip = self.ntoa_ipv6(data.src)
-        pktItem.dst_ip = self.ntoa_ipv6(data.dst)
+        pktItem.src_ip = NetFormat.ntoa_ipv6(data.src)
+        pktItem.dst_ip = NetFormat.ntoa_ipv6(data.dst)
         pktItem.protocol = 'IPv6'
         self.statistics.ipv6 += 1
         if data.p == dpkt.ip.IP_PROTO_TCP:
@@ -140,23 +140,16 @@ class Analyer():
         self.statistics.icmpv6 += 1
     
     def handle_unknown(self, pktItem, data):
-        pktItem.protocol = data.__class__.__name__
+#        pktItem.protocol = data.__class__.__name__
+#        if pktItem.protocol == 'str':
+#            pktItem.protocol = 'Unknown'
         self.statistics.unknown += 1
     
     def handle_error(self, pktItem):
         pktItem.info = 'error occur in %s() while processing the packet' % inspect.stack()[2][3]
         self.statistics.error += 1
     
-    def ntoa_mac(self, nmac):
-        return '%.2x:%.2x:%.2x:%.2x:%.2x:%.2x' % tuple(map(ord, list(nmac)))
-    
-    def ntoa_ip(self, nip):
-        return '%d.%d.%d.%d' % tuple(map(ord, list(nip)))
-    
-    def ntoa_ipv6(self, nipv6):
-        # TODO: format the ipv6 address
-        return '%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x:%.2x%.2x' % tuple(map(ord, list(nipv6)))
-    
+
     def show_item(self, item):
 #        table = self.pktTableWidget
         row = self.table.rowCount()

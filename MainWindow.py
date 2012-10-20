@@ -4,7 +4,7 @@
 Module implementing MainWindow.
 """
 
-from PyQt4.QtGui import QMainWindow
+from PyQt4.QtGui import QMainWindow, QApplication
 from PyQt4.QtCore import pyqtSignature, QStringList, QString
 from PyQt4.QtGui import QTableWidget
 from Ui_QSniffer import Ui_MainWindow
@@ -21,10 +21,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         
         self.pktTableWidget.setColumnWidth(0,50)
+        self.pktTableWidget.setColumnWidth(1,75)
+        self.pktTableWidget.setColumnWidth(2,150)
+        self.pktTableWidget.setColumnWidth(3,150)
+        self.pktTableWidget.setColumnWidth(4,65)
+        self.pktTableWidget.setColumnWidth(5,60)
+        self.pktTableWidget.setColumnWidth(6,160)
         self.pktTableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
         self.pktTableWidget.setSelectionBehavior(QTableWidget.SelectRows)
         self.pktTableWidget.setSelectionMode(QTableWidget.SingleSelection)
         self.pktTableWidget.setAlternatingRowColors(True)
+        
+        self.pktTreeWidget.setHeaderHidden(True)
     
     def set_devlist(self, devlist, isWIN32):
         qslist = QStringList()
@@ -71,6 +79,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         pass
     
+    @pyqtSignature("")
+    def on_exportButton_clicked(self):
+        """
+        Slot documentation goes here.
+        """
+        pass
+    
+    @pyqtSignature("")
+    def on_importButton_clicked(self):
+        """
+        Slot documentation goes here.
+        """
+        pass
+    
     @pyqtSignature("int")
     def on_promisCheckBox_stateChanged(self,p0):
         """
@@ -106,3 +128,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         pass
     
+
+if __name__ == "__main__":
+    import sys
+    app = QApplication(sys.argv)
+    mainWindow = MainWindow()
+
+    mainWindow.show()
+    sys.exit(app.exec_())   

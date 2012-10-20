@@ -8,8 +8,8 @@ if platform.python_version()[0] == "3":
     raw_input = input
 
 errbuf = create_string_buffer(PCAP_ERRBUF_SIZE)
-header = POINTER(pcap_pkthdr)()
-pkt_data = POINTER(c_ubyte)()
+#header = POINTER(pcap_pkthdr)()
+#pkt_data = POINTER(c_ubyte)()
 
 class Capturer():
     def __init__(self, pktList):
@@ -19,7 +19,7 @@ class Capturer():
         self.ifindex = 0            # choosed interface
         self.adhandle = None        # interface handler
         self.filter = ""            # filter string
-        self.fcode= bpf_program()   # filter code
+        self.fcode = bpf_program()   # filter code
         self.goon = False
         self.get_device_list()
     
@@ -61,35 +61,51 @@ class Capturer():
                 else:
                     print (" (No description available)\n")
     
-    def set_promisc(self, ispromisc = False):
+    def set_promisc(self, ispromisc=False):
         self.__ispromisc = ispromisc
-        print "promisc: %r"%self.__ispromisc
+        print "promisc: %r" % self.__ispromisc
     
-    def open_dev(self, ifindex = 0):
-        self.ifindex = ifindex
-        if(len(self.devlist) == 0):
-            print "\nNo device in the device list!\n"
+    def choose_source(self, srctype, clue):
+        if srctype == 'file':
+            fname = clue
+            source = create_string_buffer(PCAP_ERRBUF_SIZE)
+            if pcap_createsrcstr(source, PCAP_SRC_FILE, None, None, fname, errbuf) != 0:
+                print 'create src str failed'
+                return False
+            else:
+                return source
+        elif srctype == 'dev':
+            self.ifindex = clue
+            if(len(self.devlist) == 0):
+                print "\nNo device in the device list!\n"
+                return False
+            if(self.ifindex < 0 or self.ifindex >= len(self.devlist)):
+                print ("\nInterface number(%d) out of range(%d).\n" % (self.ifindex, len(self.devlist)))
+                return False
+            d = self.devlist[self.ifindex]
+            return d.name
+        else:
             return False
-        if(self.ifindex < 0 or self.ifindex >= len(self.devlist)):
-            print ("\nInterface number(%d) out of range(%d).\n" % (self.ifindex,len(self.devlist)))
-            return False
-        d = self.devlist[self.ifindex]
-        self.adhandle = pcap_open_live(d.name, 65536, int(self.__ispromisc), 1000, errbuf)
+        
+    def open_source(self, source):
+        
+        self.adhandle = pcap_open_live(source, 65536, int(self.__ispromisc), 1000, errbuf)
         if (self.adhandle == None):
-            print("\nUnable to open the adapter. %s is not supported by Pcap-WinPcap\n" % d.name)
+            print("\nUnable to open the adapter. %s is not supported by Pcap-WinPcap\n" % source)
             return False
+
         return True
     
-    def compile_filter(self, filterstr = ""):
+    def compile_filter(self, filterstr=""):
         self.filter = filterstr
         netmask = 0xffffff
-        if pcap_compile(self.adhandle,byref(self.fcode),self.filter,1,netmask) < 0:
+        if pcap_compile(self.adhandle, byref(self.fcode), self.filter, 1, netmask) < 0:
             print('\nError compiling filter: wrong syntax.\n')
             return False
         return True
             
     def set_filter(self):
-        if pcap_setfilter(self.adhandle,byref(self.fcode)) <0:
+        if pcap_setfilter(self.adhandle, byref(self.fcode)) < 0:
             print('\nError setting the filter\n')
             return False
         return True
@@ -97,16 +113,26 @@ class Capturer():
     def start_capture(self):
         res = 1
         self.goon = True
+        #********dump
+        self.dumpfile = pcap_dump_open(self.adhandle, '~tmp')
+        if(self.dumpfile == None):
+            print 'dump file open error'
+        #**************
         while res >= 0 and self.goon:
+            header = POINTER(pcap_pkthdr)()
+            pkt_data = POINTER(c_ubyte)()
             res = pcap_next_ex(self.adhandle, byref(header), byref(pkt_data))
             if res == 0:
                 print "timeout"
                 continue
             
             self.pktList.mutex.acquire()
-            self.pktList.pktlist.append((copy.deepcopy(header.contents), 
+            self.pktList.pktlist.append((copy.deepcopy(header.contents),
                                  buffer(bytearray(pkt_data[:header.contents.len]))))
+
             self.pktList.mutex.release()
+            
+            pcap_dump(self.dumpfile, header, pkt_data)
             
         if res == -1:
             print("Error reading the packets: %s\n", pcap_geterr(self.adhandle));
@@ -118,8 +144,10 @@ class Capturer():
     
     def stop_capture(self):
         self.goon = False
+        pcap_dump_close(self.dumpfile)
     
     def clear(self):
+#        os.remove('./~tmp')
         pass
     
     def print_pkts(self):
@@ -132,8 +160,7 @@ class Capturer():
 
 
 if __name__ == '__main__':
-    pktlist = []
-    cap = Capturer(pktlist,None)
-    print cap.print_device_list()
+    cap = Capturer(PktList())
+    
 
         
