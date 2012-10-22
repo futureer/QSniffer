@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-4.6.dtd">
 <!-- eric4 project file for project QSniffer -->
-<!-- Saved: 2012-10-12, 09:22:09 -->
+<!-- Saved: 2012-10-23, 01:32:17 -->
 <!-- Copyright (C) 2012 ,  -->
 <Project version="4.6">
   <Language></Language>
@@ -12,7 +12,6 @@
   <Author></Author>
   <Email></Email>
   <Sources>
-    <Source>test.py</Source>
     <Source>__init__.py</Source>
     <Source>Ui_QSniffer.py</Source>
     <Source>MainWindow.py</Source>

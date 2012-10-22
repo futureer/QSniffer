@@ -1,6 +1,6 @@
 from ctypes import *
 from winpcapy import *
-import time, platform, copy
+import time, platform, copy, os
 from Util import PktList
 
 
@@ -10,7 +10,6 @@ if platform.python_version()[0] == "3":
 errbuf = create_string_buffer(PCAP_ERRBUF_SIZE)
 #header = POINTER(pcap_pkthdr)()
 #pkt_data = POINTER(c_ubyte)()
-
 class Capturer():
     def __init__(self, pktList):
         self.pktList = pktList      # packet list
@@ -65,33 +64,26 @@ class Capturer():
         self.__ispromisc = ispromisc
         print "promisc: %r" % self.__ispromisc
     
-    def choose_source(self, srctype, clue):
-        if srctype == 'file':
-            fname = clue
-            source = create_string_buffer(PCAP_ERRBUF_SIZE)
-            if pcap_createsrcstr(source, PCAP_SRC_FILE, None, None, fname, errbuf) != 0:
-                print 'create src str failed'
-                return False
-            else:
-                return source
-        elif srctype == 'dev':
-            self.ifindex = clue
-            if(len(self.devlist) == 0):
-                print "\nNo device in the device list!\n"
-                return False
-            if(self.ifindex < 0 or self.ifindex >= len(self.devlist)):
-                print ("\nInterface number(%d) out of range(%d).\n" % (self.ifindex, len(self.devlist)))
-                return False
-            d = self.devlist[self.ifindex]
-            return d.name
-        else:
+    def open_dump(self, filename):
+        fname = create_string_buffer(filename)
+        self.adhandle = pcap_open_offline(fname, errbuf)
+        if self.adhandle == None:
             return False
+        return True
         
-    def open_source(self, source):
-        
-        self.adhandle = pcap_open_live(source, 65536, int(self.__ispromisc), 1000, errbuf)
+    def open_dev(self, ifindex):
+        self.ifindex = ifindex
+        if(len(self.devlist) == 0):
+            print "\nNo device in the device list!\n"
+            return False
+        if(self.ifindex < 0 or self.ifindex >= len(self.devlist)):
+            print ("\nInterface number(%d) out of range(%d).\n" % (self.ifindex, len(self.devlist)))
+            return False
+        d = self.devlist[self.ifindex]
+
+        self.adhandle = pcap_open_live(d.name, 65536, int(self.__ispromisc), 1000, errbuf)
         if (self.adhandle == None):
-            print("\nUnable to open the adapter. %s is not supported by Pcap-WinPcap\n" % source)
+            print("\nUnable to open the adapter. %s is not supported by Pcap-WinPcap\n" % d.name)
             return False
 
         return True
@@ -116,7 +108,7 @@ class Capturer():
         #********dump
         self.dumpfile = pcap_dump_open(self.adhandle, '~tmp')
         if(self.dumpfile == None):
-            print 'dump file open error'
+            print 'temp file open error'
         #**************
         while res >= 0 and self.goon:
             header = POINTER(pcap_pkthdr)()
@@ -125,21 +117,26 @@ class Capturer():
             if res == 0:
                 print "timeout"
                 continue
+            if res == -2:
+                break
             
             self.pktList.mutex.acquire()
             self.pktList.pktlist.append((copy.deepcopy(header.contents),
                                  buffer(bytearray(pkt_data[:header.contents.len]))))
 
             self.pktList.mutex.release()
-            
+            #.........dump
             pcap_dump(self.dumpfile, header, pkt_data)
+            #..............
             
         if res == -1:
             print("Error reading the packets: %s\n", pcap_geterr(self.adhandle));
             pcap_close(self.adhandle)
             return False
+        
         pcap_close(self.adhandle)
         self.adhandle = None
+        
         return True
     
     def stop_capture(self):
@@ -147,7 +144,8 @@ class Capturer():
         pcap_dump_close(self.dumpfile)
     
     def clear(self):
-#        os.remove('./~tmp')
+        if os.path.exists('~tmp'):
+            os.remove('~tmp')
         pass
     
     def print_pkts(self):

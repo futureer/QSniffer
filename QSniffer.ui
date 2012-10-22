@@ -18,9 +18,9 @@
     <property name="geometry">
      <rect>
       <x>250</x>
-      <y>60</y>
+      <y>73</y>
       <width>701</width>
-      <height>611</height>
+      <height>600</height>
      </rect>
     </property>
     <property name="title">
@@ -30,9 +30,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>30</y>
+       <y>31</y>
        <width>680</width>
-       <height>341</height>
+       <height>330</height>
       </rect>
      </property>
      <property name="sizePolicy">
@@ -93,7 +93,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>380</y>
+       <y>370</y>
        <width>340</width>
        <height>221</height>
       </rect>
@@ -108,7 +108,7 @@
      <property name="geometry">
       <rect>
        <x>360</x>
-       <y>380</y>
+       <y>370</y>
        <width>190</width>
        <height>221</height>
       </rect>
@@ -118,7 +118,7 @@
      <property name="geometry">
       <rect>
        <x>559</x>
-       <y>380</y>
+       <y>370</y>
        <width>131</width>
        <height>220</height>
       </rect>
@@ -129,7 +129,7 @@
     <property name="geometry">
      <rect>
       <x>250</x>
-      <y>1</y>
+      <y>11</y>
       <width>701</width>
       <height>61</height>
      </rect>
@@ -191,9 +191,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>0</y>
+      <y>10</y>
       <width>231</width>
-      <height>191</height>
+      <height>71</height>
      </rect>
     </property>
     <property name="title">
@@ -203,7 +203,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>30</y>
+       <y>35</y>
        <width>51</width>
        <height>20</height>
       </rect>
@@ -216,127 +216,10 @@
      <property name="geometry">
       <rect>
        <x>60</x>
-       <y>27</y>
+       <y>32</y>
        <width>161</width>
        <height>26</height>
       </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="descLabel">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>57</y>
-       <width>81</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Info</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="macLabel">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>77</y>
-       <width>34</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>MAC: </string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="macContentLabel">
-     <property name="geometry">
-      <rect>
-       <x>72</x>
-       <y>77</y>
-       <width>150</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-    <widget class="QLabel" name="ipAddrLabel">
-     <property name="geometry">
-      <rect>
-       <x>31</x>
-       <y>98</y>
-       <width>21</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>IP:</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="ipAddressLabel">
-     <property name="geometry">
-      <rect>
-       <x>72</x>
-       <y>98</y>
-       <width>150</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-    <widget class="QLabel" name="ipv6AddrLabel">
-     <property name="geometry">
-      <rect>
-       <x>31</x>
-       <y>118</y>
-       <width>31</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>IPv6:</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="ipv6Address1Label">
-     <property name="geometry">
-      <rect>
-       <x>72</x>
-       <y>118</y>
-       <width>150</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-    <widget class="QLabel" name="ipv6Address2Label">
-     <property name="geometry">
-      <rect>
-       <x>72</x>
-       <y>139</y>
-       <width>150</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-    <widget class="QLabel" name="ipv6Address3Label">
-     <property name="geometry">
-      <rect>
-       <x>72</x>
-       <y>159</y>
-       <width>150</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
      </property>
     </widget>
    </widget>
@@ -344,7 +227,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>190</y>
+      <y>90</y>
       <width>231</width>
       <height>101</height>
      </rect>
@@ -409,7 +292,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>350</y>
+      <y>300</y>
       <width>231</width>
       <height>321</height>
      </rect>
@@ -760,9 +643,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>290</y>
+      <y>200</y>
       <width>231</width>
-      <height>61</height>
+      <height>91</height>
      </rect>
     </property>
     <property name="title">
@@ -772,7 +655,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>26</y>
+       <y>27</y>
        <width>90</width>
        <height>32</height>
       </rect>
@@ -785,13 +668,26 @@
      <property name="geometry">
       <rect>
        <x>120</x>
-       <y>26</y>
+       <y>27</y>
        <width>90</width>
        <height>32</height>
       </rect>
      </property>
      <property name="text">
       <string>Export...</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="dumpLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>210</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
      </property>
     </widget>
    </widget>

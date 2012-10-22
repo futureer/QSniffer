@@ -37,8 +37,7 @@ class QSniffer(MainWindow):
         MainWindow.on_startButton_clicked(self)
         if self.capturer.adhandle == None:
             curindex = self.devComboBox.currentIndex()
-            source = self.capturer.choose_source('dev', curindex)
-            if not self.capturer.open_source(source):
+            if not self.capturer.open_dev(curindex):
 #                TODO: handle open error
                 return
         self.cap_thread = threading.Thread(target=self.capturer.start_capture)
@@ -104,23 +103,24 @@ class QSniffer(MainWindow):
         fdialog = QtGui.QFileDialog()
         fdialog.setWindowTitle('Select pcap file')
         fname = fdialog.getOpenFileName(directory='.')
-        source = self.capturer.choose_source('file', fname)
-        if not self.capturer.open_source(source):
+        fname = str(fname)
+        print "file name:%r" % fname
+        
+        if fname == '':
+            return 
+        if not self.capturer.open_dump(fname):
             return
         self.cap_thread = threading.Thread(target=self.capturer.start_capture)
         self.cap_thread.start()
         self.ana_thread = threading.Thread(target=self.analyzer.start_analize)
         self.ana_thread.start()
         
-        
-        
     @pyqtSignature("")
     def on_filterApplyButton_clicked(self):
         MainWindow.on_filterApplyButton_clicked(self)
         if self.capturer.adhandle == None:
             curindex = self.devComboBox.currentIndex()
-            source = self.capturer.choose_source('dev', curindex)
-            if not self.capturer.open_source(source):
+            if not self.capturer.open_dev(curindex):
                 return
         filterstr = str(self.filterLineEdit.text())
 #        print "%r" % filterstr
@@ -169,6 +169,7 @@ class QSniffer(MainWindow):
     def closeEvent(self, *args, **kwargs):
         if os.path.exists('./~tmp'):
             os.remove('./~tmp')
+        self.on_stopButton_clicked()
         return MainWindow.closeEvent(self, *args, **kwargs)
     
 

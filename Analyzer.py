@@ -37,7 +37,6 @@ class Analyer():
         header, data = pkt
         pktItem = PktItem()
         pktItem.rawpkt = pkt
-        
         frame = dpkt.ethernet.Ethernet(data)
         
         self.handle_frame(pktItem, header, frame)
