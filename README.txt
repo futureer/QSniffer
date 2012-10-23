@@ -10,5 +10,5 @@ QSniffer
   4) PyQt4
     http://www.riverbankcomputing.co.uk/software/pyqt/download
 
-2. 打包好的QSniffer.exe可在32位Windows上执行。不需要安装Python运行环境及上述各依赖库。
+2. 打包好的QSniffer.exe可在32位Windows上执行(见可执行程序文件夹)。不需要安装Python运行环境及上述各依赖库。
 	
