@@ -139,6 +139,7 @@ class Capturer():
             return False
         
         pcap_close(self.adhandle)
+        pcap_dump_close(self.dumpfile)
         self.adhandle = None
         
         return True
@@ -148,8 +149,8 @@ class Capturer():
         pcap_dump_close(self.dumpfile)
     
     def clear(self):
-        if os.path.exists('~tmp'):
-            os.remove('~tmp')
+        if os.path.exists('./~tmp'):
+            os.remove('./~tmp')
         pass
     
     def print_pkts(self):

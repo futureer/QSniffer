@@ -3,3 +3,4 @@ test.*
 *.pcap
 .settings
 .eric4project
+~tmp
