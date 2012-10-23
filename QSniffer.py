@@ -20,9 +20,6 @@ class QSniffer(MainWindow):
 #        self.testWidget()
         self.show()
     
-    def testWidget(self):
-        pass
-        
     @pyqtSignature("int")
     def on_promisCheckBox_stateChanged(self, p0):
         MainWindow.on_promisCheckBox_stateChanged(self, p0)
@@ -48,10 +45,10 @@ class QSniffer(MainWindow):
     @pyqtSignature("")
     def on_stopButton_clicked(self):
         MainWindow.on_stopButton_clicked(self)
-        if self.cap_thread.is_alive():
+        if self.cap_thread != None and self.cap_thread.is_alive():
             self.capturer.stop_capture()
             self.cap_thread.join()
-        if self.ana_thread.is_alive():
+        if self.ana_thread != None and self.ana_thread.is_alive():
             self.analyzer.stop_analize()
             self.ana_thread.join()
     
@@ -59,13 +56,19 @@ class QSniffer(MainWindow):
     def on_clearButton_clicked(self):
         MainWindow.on_clearButton_clicked(self)
         if self.cap_thread == None or self.ana_thread == None:
-            return False
+            pass
         elif self.cap_thread.is_alive() or self.ana_thread.is_alive():
-            QtGui.QMessageBox.information(self, "Information", self.tr("You must stop capture first."))
-            return False
+            if self.capturer.pktSrcType == 'dev':
+                QtGui.QMessageBox.information(self, "Information", 
+                                              self.tr("You must stop capture first."))
+                return False
+            elif self.capturer.pktSrcType == 'dump':
+                self.on_stopButton_clicked()
+        
         self.capturer.clear()
         self.analyzer.clear()
         self.pktList.clear()
+        
         count = self.pktTableWidget.rowCount()
         for i in range(count):
             self.pktTableWidget.removeRow(0)
@@ -75,30 +78,29 @@ class QSniffer(MainWindow):
     def on_exportButton_clicked(self):
         MainWindow.on_exportButton_clicked(self)
         if self.cap_thread == None or self.ana_thread == None:
-            return
-        if self.cap_thread.is_alive() or self.ana_thread.is_alive():
-            QtGui.QMessageBox.information(self, "Information", self.tr("You must stop capture first."))
-            return 
+            pass
+        elif self.cap_thread.is_alive() or self.ana_thread.is_alive():
+            if self.capturer.pktSrcType == 'dev':
+                QtGui.QMessageBox.information(self, "Information", 
+                                              self.tr("You must stop capture first."))
+                return False
+            elif self.capturer.pktSrcType == 'dump':
+                self.on_stopButton_clicked()
         
         fdialog = QtGui.QFileDialog()
         fdialog.setWindowTitle('Save pcap file')
         fname = fdialog.getSaveFileName(filter='pcap file(*.pcap)', directory='.')
-        shutil.move('~tmp', fname)
+        if str(fname) == '':
+            return False
+        if os.path.exists('~tmp'):
+            shutil.move('~tmp', fname)
+        return True
     
     @pyqtSignature("")
     def on_importButton_clicked(self):
         MainWindow.on_importButton_clicked(self)
-        if self.cap_thread == None and self.ana_thread == None:
-            pass
-        elif self.cap_thread.is_alive() or self.ana_thread.is_alive():
-            QtGui.QMessageBox.information(self, "Information", self.tr("You must stop capture first."))
-            return
-        self.capturer.clear()
-        self.analyzer.clear()
-        self.pktList.clear()
-        count = self.pktTableWidget.rowCount()
-        for i in range(count):
-            self.pktTableWidget.removeRow(0)
+        if not self.on_clearButton_clicked():
+            return False
         
         fdialog = QtGui.QFileDialog()
         fdialog.setWindowTitle('Select pcap file')

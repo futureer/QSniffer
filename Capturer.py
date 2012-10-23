@@ -20,6 +20,9 @@ class Capturer():
         self.filter = ""            # filter string
         self.fcode = bpf_program()   # filter code
         self.goon = False
+                
+        self.pktSrcType = None  #pkt source type
+        
         self.get_device_list()
     
     def get_device_list(self):
@@ -69,6 +72,7 @@ class Capturer():
         self.adhandle = pcap_open_offline(fname, errbuf)
         if self.adhandle == None:
             return False
+        self.pktSrcType = 'dump'
         return True
         
     def open_dev(self, ifindex):
@@ -85,7 +89,7 @@ class Capturer():
         if (self.adhandle == None):
             print("\nUnable to open the adapter. %s is not supported by Pcap-WinPcap\n" % d.name)
             return False
-
+        self.pktSrcType = 'dev'
         return True
     
     def compile_filter(self, filterstr=""):
@@ -105,7 +109,7 @@ class Capturer():
     def start_capture(self):
         res = 1
         self.goon = True
-        #********dump
+        #********dump to tmp file
         self.dumpfile = pcap_dump_open(self.adhandle, '~tmp')
         if(self.dumpfile == None):
             print 'temp file open error'
