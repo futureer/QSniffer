@@ -72,6 +72,9 @@ class QSniffer(MainWindow):
         count = self.pktTableWidget.rowCount()
         for i in range(count):
             self.pktTableWidget.removeRow(0)
+        self.pktTreeWidget.clear()
+        self.pktAsciiBrowser.clear()
+        self.pkt0xBrowser.clear()
         return True
     
     @pyqtSignature("")
@@ -106,7 +109,7 @@ class QSniffer(MainWindow):
         fdialog.setWindowTitle('Select pcap file')
         fname = fdialog.getOpenFileName(directory='.')
         fname = str(fname)
-        print "file name:%r" % fname
+#        print "file name:%r" % fname
         
         if fname == '':
             return 
