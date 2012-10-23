@@ -92,7 +92,8 @@ class QSniffer(MainWindow):
         
         fdialog = QtGui.QFileDialog()
         fdialog.setWindowTitle('Save pcap file')
-        fname = fdialog.getSaveFileName(filter='pcap file(*.pcap)', directory='.')
+        fname = fdialog.getSaveFileName(filter='pcap file(*.pcap)', directory='/')
+        fname = unicode(fname)
         if str(fname) == '':
             return False
         if os.path.exists('~tmp'):
@@ -107,8 +108,8 @@ class QSniffer(MainWindow):
         
         fdialog = QtGui.QFileDialog()
         fdialog.setWindowTitle('Select pcap file')
-        fname = fdialog.getOpenFileName(directory='.')
-        fname = str(fname)
+        fname = fdialog.getOpenFileName(directory='/')
+        fname = unicode(fname)
 #        print "file name:%r" % fname
         
         if fname == '':
